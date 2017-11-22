@@ -502,10 +502,19 @@ sub commands {
     foreach my $sym (keys %$symtable) {
         if($sym =~ /^run_command_/) {
             my $glob = $symtable->{$sym};
-            if(defined *$glob{CODE}) {
-                $sym =~ s/^run_command_//;
-                $sym =~ s/_/-/g;
-                push @commands, $sym;
+            if ( my $ref = ref $glob ) {
+                my $cv_defined = 0;
+                if ( $ref eq 'CODE' ) {
+                    # with perl >= 5.27 stash entry can points to a CV directly
+                    $cv_defined = 1;
+                } elsif (defined *$glob{CODE}) {
+                    $cv_defined = 1;
+                }
+                if ( $cv_defined ) {
+                    $sym =~ s/^run_command_//;
+                    $sym =~ s/_/-/g;
+                    push @commands, $sym;
+                }
             }
         }
     }
